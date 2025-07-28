@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3GPP Carrier Combination Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .carrier-selection {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .carrier-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .carrier-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        select {
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        select:hover {
+            border-color: #3498db;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #2980b9;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .clear-btn {
+            padding: 12px 24px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            background: #fee;
+            border: 2px solid #e74c3c;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .results {
+            padding: 30px;
+        }
+
+        .scenario-section {
+            margin-bottom: 40px;
+        }
+
+        .scenario-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+            font-weight: 300;
+        }
+
+        .heatmaps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .heatmap-wrapper {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e9ecef;
+        }
+
+        .heatmap-title {
+            font-size: 1.3em;
+            color: #34495e;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .heatmap {
+            display: grid;
+            gap: 3px;
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .heatmap-4g {
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        .heatmap-5g {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .heatmap-mixed {
+            grid-template-columns: repeat(9, 1fr);
+        }
+
+        .band-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .band-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .band-cell.supported {
+            background: #3498db;
+            color: white;
+        }
+
+        .band-cell.supported.tdd {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .band-cell.vendor-specific {
+            background: #f39c12;
+            color: white;
+        }
+
+        .band-cell.vendor-specific.tdd {
+            background: #e67e22;
+            color: white;
+        }
+
+        .band-cell.vendor-specific::after {
+            content: "V";
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .band-cell.selected {
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.3);
+        }
+
+        .band-info {
+            font-size: 0.7em;
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 1px 3px;
+            border-radius: 3px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .band-cell:hover .band-info {
+            opacity: 1;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: #2c3e50;
+            color: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            max-width: 320px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+            display: none;
+            pointer-events: none;
+            line-height: 1.3;
+        }
+
+        .tooltip::before {
+            content: '';
+            position: absolute;
+            top: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-bottom: 7px solid #2c3e50;
+        }
+
+        .tooltip-header {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #3498db;
+        }
+
+        .tooltip-combo {
+            margin: 2px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .tooltip-vendor {
+            color: #f39c12;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-supported {
+            background: #3498db;
+        }
+
+        .legend-supported-tdd {
+            background: #9b59b6;
+        }
+
+        .legend-vendor {
+            background: #f39c12;
+        }
+
+        .legend-vendor-tdd {
+            background: #e67e22;
+        }
+
+        .legend-not-supported {
+            background: white;
+            border: 2px solid #bdc3c7;
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .carrier-selection {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .heatmaps-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>3GPP Carrier Combination Analyzer</h1>
+            <p>Interactive tool for visualizing LTE CA and EN-DC combinations based on Release 18 specifications</p>
+        </div>
+
+        <div class="controls">
+            <div class="carrier-selection">
+                <div class="carrier-group">
+                    <label for="phase">Deployment Phase</label>
+                    <select id="phase">
+                        <option value="phase1">Phase 1 (Current)</option>
+                        <option value="phase2">Phase 2 (Future)</option>
+                    </select>
+                </div>
+
+                <div class="carrier-group">
+                    <label for="carrier1">Primary Carrier</label>
+                    <select id="carrier1">
+                        <option value="">Select Primary Carrier</option>
+                    </select>
+                </div>
+
+                <div class="carrier-group">
+                    <label for="carrier2">Secondary Carrier</label>
+                    <select id="carrier2">
+                        <option value="">Select Secondary Carrier</option>
+                    </select>
+                </div>
+
+                <button class="clear-btn" onclick="clearSelection()">Clear Selection</button>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        console.log("3GPP Analyzer starting...");
+
+        // Updated phase configurations based on Excel analysis
+        var phaseConfigs = {
+            phase1: {
+                lteBands: ['1', '3', '8', '20', '28', '38', '40'],
+                nrBands: ['n28', 'n78'],
+                bandLabels: {
+                    '1': 'B1', '3': 'B3', '8': 'B8', '20': 'B20', '28': 'B28',
+                    '38': 'B38', '40': 'B40', 'n28': 'n28', 'n78': 'n78'
+                },
+                bandInfo: {
+                    '1': '10 MHz', '3': '5 MHz', '8': '10 MHz', '20': '10 MHz', 
+                    '28': '10 MHz', '38': '20 MHz', '40': '20 MHz', 
+                    'n28': '10 MHz', 'n78': '40/80 MHz'
+                },
+                tddBands: ['38', '40', 'n78']
+            },
+            phase2: {
+                lteBands: ['1', '3', '28', '40'],
+                nrBands: ['n20', 'n28', 'n38', 'n78'],
+                bandLabels: {
+                    '1': 'B1', '3': 'B3', '28': 'B28', '40': 'B40',
+                    'n20': 'n20', 'n28': 'n28', 'n38': 'n38', 'n78': 'n78'
+                },
+                bandInfo: {
+                    '1': '10 MHz', '3': '5 MHz', '28': '10 MHz', '40': '20 MHz', 
+                    'n20': '10 MHz', 'n28': '10 MHz', 'n38': '20 MHz', 'n78': '80 MHz'
+                },
+                tddBands: ['40', 'n78', 'n38']
+            }
+        };
+
+        // Updated combination data based on Excel analysis
+        var combinations = {
+            phase1: {
+                lte2cc: [
+                    ['1', '3'], ['1', '8'], ['1', '20'], ['1', '28'], ['3', '8'], ['3', '20'], ['3', '28'],
+                    ['8', '20'], ['8', '28'], ['20', '28'], ['3', '3'], ['40', '40'], ['1', '38'], 
+                    ['3', '38'], ['8', '38'], ['20', '38'], ['28', '38'], ['1', '40'], ['3', '40'], 
+                    ['8', '40'], ['20', '40']
+                ],
+                lte2ccVendor: [
+                    ['38', '40']
+                ],
+                lte3cc: [
+                    ['1', '3', '8'], ['1', '3', '20'], ['1', '3', '28'], ['1', '8', '20'], ['1', '8', '28'], 
+                    ['1', '20', '28'], ['3', '8', '20'], ['3', '8', '28'], ['3', '20', '28'], ['8', '20', '28'],
+                    ['1', '3', '40'], ['1', '40', '40']
+                ],
+                lte4cc: [
+                    ['1', '3', '8', '20'], ['1', '3', '8', '28'], ['1', '3', '20', '28'], ['1', '8', '20', '28'],
+                    ['3', '8', '20', '28'], ['1', '3', '3', '40'], ['1', '8', '40', '40']
+                ],
+                endc: [
+                    ['1', 'n28'], ['1', 'n78'], ['1', 'n78'], ['3', 'n28'], ['3', 'n78'], ['8', 'n28'],
+                    ['8', 'n78'], ['20', 'n28'], ['20', 'n78'], ['28', 'n78'], ['38', 'n78'], 
+                    ['38', 'n78'], ['40', 'n78'], ['40', 'n78']
+                ],
+                endc2cc: [
+                    ['1', '3', 'n78'], ['1', '3', 'n78'], ['1', '8', 'n28'], ['1', '8', 'n78'], 
+                    ['1', '20', 'n78'], ['3', '8', 'n78'], ['40', '40', 'n78']
+                ],
+                endc3cc: [
+                    ['1', '3', '8', 'n78'], ['1', '3', '8', 'n78'], ['1', '3', '20', 'n78'], 
+                    ['1', '8', '20', 'n78'], ['1', '3', '40', 'n78'], ['1', '8', '40', 'n78'],
+                    ['1', '40', '40', 'n78'], ['1', '40', '40', 'n78'], ['3', '20', 'n78'], 
+                    ['40', '40', '1', 'n78']
+                ],
+                endc4cc: [
+                    ['1', '3', '8', '20', 'n78'], ['1', '3', '8', '20', 'n78'], ['1', '8', '40', '40', 'n78'],
+                    ['1', '8', '40', '40', 'n78']
+                ],
+                endcNrMulti: [
+                    ['1', 'n28', 'n78'], ['1', 'n28', 'n78'], ['1', 'n78', 'n78'], ['1', 'n78', 'n78'],
+                    ['40', 'n78', 'n78']
+                ],
+                nrCa: [
+                    ['n28', 'n78'], ['n28', 'n78'], ['n78', 'n78'], ['n78', 'n78']
+                ],
+                nrDc: [
+                    ['n28', 'n78'], ['n28', 'n78'], ['n78', 'n28'], ['n78', 'n78']
+                ]
+            },
+            phase2: {
+                lte2cc: [
+                    ['1', '3'], ['1', '28'], ['3', '28'], ['1', '40'], ['3', '40'], ['28', '40']
+                ],
+                lte2ccVendor: [],
+                lte3cc: [
+                    ['1', '3', '28'], ['1', '3', '40'], ['1', '28', '40'], ['3', '28', '40']
+                ],
+                lte4cc: [
+                    ['1', '3', '28', '40']
+                ],
+                endc: [
+                    ['1', 'n28'], ['1', 'n78'], ['1', 'n38'], ['1', 'n20'], ['3', 'n28'], ['3', 'n78'], 
+                    ['3', 'n38'], ['3', 'n20'], ['28', 'n28'], ['28', 'n78'], ['28', 'n38'], ['28', 'n20'],
+                    ['40', 'n28'], ['40', 'n78'], ['40', 'n38'], ['40', 'n20'], ['1', 'n78'], ['3', 'n78'],
+                    ['28', 'n78']
+                ],
+                endc2cc: [
+                    ['1', '3', 'n28'], ['1', '3', 'n78'], ['1', '3', 'n38'], ['1', '3', 'n20'],
+                    ['1', '28', 'n28'], ['1', '28', 'n78'], ['1', '28', 'n38'], ['1', '28', 'n20'],
+                    ['1', '40', 'n28'], ['1', '40', 'n78'], ['1', '40', 'n38'], ['1', '40', 'n20'],
+                    ['3', '28', 'n28'], ['3', '28', 'n78'], ['3', '28', 'n38'], ['3', '28', 'n20'],
+                    ['3', '40', 'n28'], ['3', '40', 'n78'], ['3', '40', 'n38'], ['3', '40', 'n20'],
+                    ['28', '40', 'n28'], ['28', '40', 'n78'], ['28', '40', 'n38'], ['28', '40', 'n20'],
+                    ['1', '3', 'n78']
+                ],
+                endc3cc: [
+                    ['1', '3', '28', 'n78'], ['1', '3', '28', 'n38'], ['1', '3', '28', 'n20'],
+                    ['1', '3', '40', 'n78'], ['1', '3', '40', 'n38'], ['1', '3', '40', 'n20'],
+                    ['1', '28', '40', 'n78'], ['1', '28', '40', 'n38'], ['1', '28', '40', 'n20'],
+                    ['3', '28', '40', 'n78'], ['3', '28', '40', 'n38'], ['3', '28', '40', 'n20'],
+                    ['1', '3', '28', 'n78'], ['1', '3', '40', 'n78'], ['1', '28', '40', 'n78']
+                ],
+                endc4cc: [
+                    ['1', '3', '28', '40', 'n78'], ['1', '3', '28', '40', 'n38'], 
+                    ['1', '3', '28', '40', 'n20'], ['1', '3', '28', '40', 'n78']
+                ],
+                endcNrMulti: [
+                    ['1', 'n28', 'n78'], ['1', 'n28', 'n38'], ['1', 'n28', 'n20'], ['1', 'n38', 'n78'], 
+                    ['1', 'n20', 'n78'], ['3', 'n28', 'n78'], ['3', 'n28', 'n38'], ['3', 'n28', 'n20'], 
+                    ['3', 'n38', 'n78'], ['3', 'n20', 'n78'], ['28', 'n28', 'n78'], ['28', 'n28', 'n38'], 
+                    ['28', 'n28', 'n20'], ['28', 'n38', 'n78'], ['28', 'n20', 'n78'], ['40', 'n28', 'n78'], 
+                    ['40', 'n28', 'n38'], ['40', 'n28', 'n20'], ['40', 'n38', 'n78'], ['40', 'n20', 'n78'], 
+                    ['40', 'n78', 'n78'], ['1', 'n78', 'n78'], ['3', 'n78', 'n78']
+                ],
+                nrCa: [
+                    ['n28', 'n78'], ['n28', 'n38'], ['n28', 'n20'], ['n38', 'n78'], ['n20', 'n78'], ['n78', 'n78']
+                ],
+                nrDc: [
+                    ['n28', 'n78'], ['n78', 'n28'], ['n78', 'n78'], ['n78', 'n38']
+                ]
+            }
+        };
+
+        // Current state
+        var currentPhase = 'phase1';
+        var currentConfig = phaseConfigs[currentPhase];
+
+        // Helper functions
+        function isLteBand(band) {
+            return currentConfig.lteBands.includes(band);
+        }
+
+        function isNrBand(band) {
+            return currentConfig.nrBands.includes(band);
+        }
+
+        function isTddBand(band) {
+            return currentConfig.tddBands.includes(band);
+        }
+
+        function getSupportedBands(selectedBand, combinationType) {
+            var combos = combinations[currentPhase][combinationType] || [];
+            var vendorCombos = combinations[currentPhase][combinationType + 'Vendor'] || [];
+            var supportedBands = [];
+            var vendorBands = [];
+            var combinationDetails = {};
+            
+            // Standard combinations
+            combos.forEach(function(combo) {
+                if (combo.includes(selectedBand)) {
+                    combo.forEach(function(band) {
+                        if (supportedBands.indexOf(band) === -1) {
+                            supportedBands.push(band);
+                        }
+                        if (!combinationDetails[band]) {
+                            combinationDetails[band] = [];
+                        }
+                        combinationDetails[band].push(combo.join('-'));
+                    });
+                }
+            });
+            
+            // Vendor combinations
+            vendorCombos.forEach(function(combo) {
+                if (combo.includes(selectedBand)) {
+                    combo.forEach(function(band) {
+                        if (vendorBands.indexOf(band) === -1) {
+                            vendorBands.push(band);
+                        }
+                        if (!combinationDetails[band]) {
+                            combinationDetails[band] = [];
+                        }
+                        combinationDetails[band].push(combo.join('-') + ' (Vendor)');
+                    });
+                }
+            });
+            
+            return {
+                standard: supportedBands,
+                vendor: vendorBands,
+                combinations: combinationDetails
+            };
+        }
+
+        function createHeatmap(title, bands, supportedBands, selectedBands, gridClass) {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'heatmap-wrapper';
+            
+            var titleDiv = document.createElement('div');
+            titleDiv.className = 'heatmap-title';
+            titleDiv.textContent = title;
+            
+            var heatmap = document.createElement('div');
+            heatmap.className = 'heatmap ' + gridClass;
+            
+            // Create tooltip element
+            var tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            document.body.appendChild(tooltip);
+            
+            bands.forEach(function(band) {
+                var cell = document.createElement('div');
+                cell.className = 'band-cell';
+                cell.textContent = currentConfig.bandLabels[band];
+                
+                // Add TDD class if applicable
+                if (isTddBand(band)) {
+                    cell.classList.add('tdd');
+                }
+                
+                // Add bandwidth info
+                var info = document.createElement('div');
+                info.className = 'band-info';
+                info.textContent = currentConfig.bandInfo[band];
+                cell.appendChild(info);
+                
+                if (selectedBands.indexOf(band) !== -1) {
+                    cell.classList.add('selected');
+                }
+                
+                if (supportedBands.standard && supportedBands.standard.indexOf(band) !== -1) {
+                    cell.classList.add('supported');
+                }
+                
+                if (supportedBands.vendor && supportedBands.vendor.indexOf(band) !== -1) {
+                    cell.classList.add('vendor-specific');
+                }
+                
+                // Add tooltip functionality
+                var combinations = supportedBands.combinations && supportedBands.combinations[band];
+                if (combinations && combinations.length > 0) {
+                    cell.addEventListener('mouseenter', function(e) {
+                        var uniqueCombos = [];
+                        combinations.forEach(function(combo) {
+                            if (uniqueCombos.indexOf(combo) === -1) {
+                                uniqueCombos.push(combo);
+                            }
+                        });
+                        
+                        // Separate standard and vendor combinations
+                        var standardCombos = uniqueCombos.filter(function(combo) {
+                            return combo.indexOf('(Vendor)') === -1;
+                        });
+                        var vendorCombos = uniqueCombos.filter(function(combo) {
+                            return combo.indexOf('(Vendor)') !== -1;
+                        });
+                        
+                        var tooltipContent = '<div class="tooltip-header">' + currentConfig.bandLabels[band] + ' Combinations:</div>';
+                        
+                        // Add standard combinations
+                        standardCombos.forEach(function(combo) {
+                            var formattedCombo = combo.replace(/(\d+|n\d+)/g, function(match) {
+                                return 'B' + match;
+                            }).replace(/Bn/g, 'n');
+                            tooltipContent += '<div class="tooltip-combo">CA_' + formattedCombo.replace(/-/g, 'A-') + 'A</div>';
+                        });
+                        
+                        // Add vendor combinations
+                        vendorCombos.forEach(function(combo) {
+                            var cleanCombo = combo.replace(' (Vendor)', '');
+                            var formattedCombo = cleanCombo.replace(/(\d+|n\d+)/g, function(match) {
+                                return 'B' + match;
+                            }).replace(/Bn/g, 'n');
+                            tooltipContent += '<div class="tooltip-combo tooltip-vendor">CA_' + formattedCombo.replace(/-/g, 'A-') + 'A (Vendor)</div>';
+                        });
+                        
+                        tooltip.innerHTML = tooltipContent;
+                        tooltip.style.display = 'block';
+                        
+                        // Position tooltip
+                        var rect = cell.getBoundingClientRect();
+                        var left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
+                        if (left < 10) left = 10;
+                        if (left + tooltip.offsetWidth > window.innerWidth - 10) {
+                            left = window.innerWidth - tooltip.offsetWidth - 10;
+                        }
+                        
+                        var top = rect.top - tooltip.offsetHeight - 12;
+                        if (top < 10) {
+                            top = rect.bottom + 12;
+                        }
+                        
+                        tooltip.style.left = left + 'px';
+                        tooltip.style.top = top + 'px';
+                    });
+                    
+                    cell.addEventListener('mouseleave', function() {
+                        tooltip.style.display = 'none';
+                    });
+                }
+                
+                heatmap.appendChild(cell);
+            });
+            
+            // Add statistics
+            var stats = document.createElement('div');
+            stats.className = 'stats';
+            var standardCount = bands.filter(function(band) {
+                return supportedBands.standard && supportedBands.standard.indexOf(band) !== -1;
+            }).length;
+            var vendorCount = bands.filter(function(band) {
+                return supportedBands.vendor && supportedBands.vendor.indexOf(band) !== -1;
+            }).length;
+            
+            var statsText = standardCount + '/' + bands.length + ' 3GPP standard';
+            if (vendorCount > 0) {
+                statsText += ', ' + vendorCount + ' vendor-specific';
+            }
+            stats.textContent = statsText;
+            
+            wrapper.appendChild(titleDiv);
+            wrapper.appendChild(heatmap);
+            wrapper.appendChild(stats);
+            
+            return wrapper;
+        }
+
+        function showAllBands() {
+            var results = document.getElementById('results');
+            
+            var section = document.createElement('div');
+            section.className = 'scenario-section';
+            
+            var title = document.createElement('div');
+            title.className = 'scenario-title';
+            title.textContent = 'Available Bands - ' + (currentPhase === 'phase1' ? 'Phase 1 (Current)' : 'Phase 2 (Future)');
+            
+            var container = document.createElement('div');
+            container.className = 'heatmaps-container';
+            
+            // Create heatmaps for all bands
+            var lteBands = currentConfig.lteBands;
+            var nrBands = currentConfig.nrBands;
+            
+            var lteHeatmap = createHeatmap('LTE Bands', lteBands, {standard: lteBands, vendor: [], combinations: {}}, [], 'heatmap-4g');
+            var nrHeatmap = createHeatmap('NR Bands', nrBands, {standard: nrBands, vendor: [], combinations: {}}, [], 'heatmap-5g');
+            
+            container.appendChild(lteHeatmap);
+            container.appendChild(nrHeatmap);
+            
+            // Add legend
+            var legend = createLegend();
+            
+            section.appendChild(title);
+            section.appendChild(container);
+            section.appendChild(legend);
+            results.appendChild(section);
+        }
+
+        function showSingleBandAnalysis(selectedBand) {
+            var results = document.getElementById('results');
+            
+            var section = document.createElement('div');
+            section.className = 'scenario-section';
+            
+            var title = document.createElement('div');
+            title.className = 'scenario-title';
+            title.textContent = 'Carrier Combinations for ' + currentConfig.bandLabels[selectedBand] + ' (' + currentConfig.bandInfo[selectedBand] + ')';
+            
+            var container = document.createElement('div');
+            container.className = 'heatmaps-container';
+            
+            // Check different combination types
+            var lteBands = currentConfig.lteBands;
+            var nrBands = currentConfig.nrBands;
+            var allBands = lteBands.concat(nrBands);
+            
+            // LTE CA combinations
+            if (isLteBand(selectedBand)) {
+                var lte2ccSupported = getSupportedBands(selectedBand, 'lte2cc');
+                var lte3ccSupported = getSupportedBands(selectedBand, 'lte3cc');
+                var lte4ccSupported = getSupportedBands(selectedBand, 'lte4cc');
+                
+                if (lte2ccSupported.standard.length > 0 || lte2ccSupported.vendor.length > 0) {
+                    container.appendChild(createHeatmap('LTE 2CC', lteBands, lte2ccSupported, [selectedBand], 'heatmap-4g'));
+                }
+                if (lte3ccSupported.standard.length > 0 || lte3ccSupported.vendor.length > 0) {
+                    container.appendChild(createHeatmap('LTE 3CC', lteBands, lte3ccSupported, [selectedBand], 'heatmap-4g'));
+                }
+                if (lte4ccSupported.standard.length > 0 || lte4ccSupported.vendor.length > 0) {
+                    container.appendChild(createHeatmap('LTE 4CC', lteBands, lte4ccSupported, [selectedBand], 'heatmap-4g'));
+                }
+                
+                // EN-DC combinations
+                var endcSupported = getSupportedBands(selectedBand, 'endc');
+                var endc2ccSupported = getSupportedBands(selectedBand, 'endc2cc');
+                var endc3ccSupported = getSupportedBands(selectedBand, 'endc3cc');
+                var endc4ccSupported = getSupportedBands(selectedBand, 'endc4cc');
+                var endcNrMultiSupported = getSupportedBands(selectedBand, 'endcNrMulti');
+                
+                if (endcSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('EN-DC (1+1)', allBands, endcSupported, [selectedBand], 'heatmap-mixed'));
+                }
+                if (endc2ccSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('EN-DC (2+1)', allBands, endc2ccSupported, [selectedBand], 'heatmap-mixed'));
+                }
+                if (endc3ccSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('EN-DC (3+1)', allBands, endc3ccSupported, [selectedBand], 'heatmap-mixed'));
+                }
+                if (endc4ccSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('EN-DC (4+1)', allBands, endc4ccSupported, [selectedBand], 'heatmap-mixed'));
+                }
+                if (endcNrMultiSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('EN-DC NR Multi-CC', allBands, endcNrMultiSupported, [selectedBand], 'heatmap-mixed'));
+                }
+            }
+            
+            // NR combinations
+            if (isNrBand(selectedBand)) {
+                var nrCaSupported = getSupportedBands(selectedBand, 'nrCa');
+                var nrDcSupported = getSupportedBands(selectedBand, 'nrDc');
+                var endcSupported = getSupportedBands(selectedBand, 'endc');
+                var endc2ccSupported = getSupportedBands(selectedBand, 'endc2cc');
+                var endc3ccSupported = getSupportedBands(selectedBand, 'endc3cc');
+                var endc4ccSupported = getSupportedBands(selectedBand, 'endc4cc');
+                var endcNrMultiSupported = getSupportedBands(selectedBand, 'endcNrMulti');
+                
+                if (nrCaSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('NR CA', nrBands, nrCaSupported, [selectedBand], 'heatmap-5g'));
+                }
+                if (nrDcSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('NR-DC', nrBands, nrDcSupported, [selectedBand], 'heatmap-5g'));
+                }
+                if (endcSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('EN-DC (1+1)', allBands, endcSupported, [selectedBand], 'heatmap-mixed'));
+                }
+                if (endc2ccSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('EN-DC (2+1)', allBands, endc2ccSupported, [selectedBand], 'heatmap-mixed'));
+                }
+                if (endc3ccSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('EN-DC (3+1)', allBands, endc3ccSupported, [selectedBand], 'heatmap-mixed'));
+                }
+                if (endc4ccSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('EN-DC (4+1)', allBands, endc4ccSupported, [selectedBand], 'heatmap-mixed'));
+                }
+                if (endcNrMultiSupported.standard.length > 0) {
+                    container.appendChild(createHeatmap('EN-DC NR Multi-CC', allBands, endcNrMultiSupported, [selectedBand], 'heatmap-mixed'));
+                }
+            }
+            
+            if (container.children.length === 0) {
+                var noResults = document.createElement('div');
+                noResults.textContent = 'No carrier combinations found for the selected band.';
+                noResults.style.textAlign = 'center';
+                noResults.style.padding = '20px';
+                noResults.style.color = '#7f8c8d';
+                container.appendChild(noResults);
+            }
+            
+            var legend = createLegend();
+            
+            section.appendChild(title);
+            section.appendChild(container);
+            section.appendChild(legend);
+            results.appendChild(section);
+        }
+
+        function showDualBandAnalysis(selectedBands) {
+            var results = document.getElementById('results');
+            var errorMessage = document.getElementById('errorMessage');
+            
+            // Check if the combination is valid
+            var isValidCombination = false;
+            var combinationTypes = [];
+            
+            // Check all combination types
+            Object.keys(combinations[currentPhase]).forEach(function(type) {
+                var combos = combinations[currentPhase][type];
+                combos.forEach(function(combo) {
+                    if (selectedBands.every(function(band) { return combo.includes(band); }) && 
+                        combo.length === selectedBands.length) {
+                        isValidCombination = true;
+                        if (combinationTypes.indexOf(type) === -1) {
+                            combinationTypes.push(type);
+                        }
+                    }
+                });
+            });
+            
+            if (!isValidCombination) {
+                errorMessage.textContent = 'The selected band combination (' + 
+                    selectedBands.map(function(b) { return currentConfig.bandLabels[b]; }).join(' + ') + 
+                    ') is not supported in the current 3GPP specifications.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            
+            var section = document.createElement('div');
+            section.className = 'scenario-section';
+            
+            var title = document.createElement('div');
+            title.className = 'scenario-title';
+            title.textContent = 'Analysis for: ' + 
+                selectedBands.map(function(b) { return currentConfig.bandLabels[b] + ' (' + currentConfig.bandInfo[b] + ')'; }).join(' + ');
+            
+            var container = document.createElement('div');
+            container.className = 'heatmaps-container';
+            
+            var lteBands = currentConfig.lteBands;
+            var nrBands = currentConfig.nrBands;
+            var allBands = lteBands.concat(nrBands);
+            
+            // 1. FIRST: Show the actual combination type that was selected
+            combinationTypes.forEach(function(type) {
+                var currentTypeCombinations = {};
+                var currentTypeTitle = '';
+                
+                // Find all combinations of this exact type that include our selected bands
+                combinations[currentPhase][type].forEach(function(combo) {
+                    if (selectedBands.every(function(band) { return combo.includes(band); }) && 
+                        combo.length === selectedBands.length) {
+                        combo.forEach(function(band) {
+                            if (!currentTypeCombinations[band]) {
+                                currentTypeCombinations[band] = [];
+                            }
+                            currentTypeCombinations[band].push(combo.join('-'));
+                        });
+                    }
+                });
+                
+                // Create current combination display
+                if (type === 'lte2cc') currentTypeTitle = '✓ LTE 2CC (Current Selection)';
+                else if (type === 'lte3cc') currentTypeTitle = '✓ LTE 3CC (Current Selection)';
+                else if (type === 'lte4cc') currentTypeTitle = '✓ LTE 4CC (Current Selection)';
+                else if (type === 'endc') currentTypeTitle = '✓ EN-DC 1+1 (Current Selection)';
+                else if (type === 'endc2cc') currentTypeTitle = '✓ EN-DC 2+1 (Current Selection)';
+                else if (type === 'endc3cc') currentTypeTitle = '✓ EN-DC 3+1 (Current Selection)';
+                else if (type === 'endc4cc') currentTypeTitle = '✓ EN-DC 4+1 (Current Selection)';
+                else if (type === 'nrCa') currentTypeTitle = '✓ NR CA (Current Selection)';
+                else if (type === 'nrDc') currentTypeTitle = '✓ NR-DC (Current Selection)';
+                
+                if (Object.keys(currentTypeCombinations).length > 0) {
+                    var supportedBands = {
+                        standard: selectedBands,
+                        vendor: [],
+                        combinations: currentTypeCombinations
+                    };
+                    
+                    var targetBands = allBands;
+                    var gridClass = 'heatmap-mixed';
+                    
+                    if (type.includes('lte') && !type.includes('endc')) {
+                        targetBands = lteBands;
+                        gridClass = 'heatmap-4g';
+                    } else if (type.includes('nr') && !type.includes('endc')) {
+                        targetBands = nrBands;
+                        gridClass = 'heatmap-5g';
+                    }
+                    
+                    container.appendChild(createHeatmap(currentTypeTitle, targetBands, supportedBands, selectedBands, gridClass));
+                }
+            });
+            
+            // 2. SECOND: Show expansion possibilities
+            combinationTypes.forEach(function(type) {
+                var expandedType = '';
+                if (type === 'lte2cc') expandedType = 'lte3cc';
+                else if (type === 'lte3cc') expandedType = 'lte4cc';
+                else if (type === 'endc') expandedType = 'endc2cc';
+                else if (type === 'endc2cc') expandedType = 'endc3cc';
+                else if (type === 'endc3cc') expandedType = 'endc4cc';
+                
+                if (expandedType && combinations[currentPhase][expandedType]) {
+                    var expansionPossibilities = [];
+                    var combinationDetails = {};
+                    
+                    combinations[currentPhase][expandedType].forEach(function(combo) {
+                        if (selectedBands.every(function(band) { return combo.includes(band); })) {
+                            combo.forEach(function(band) {
+                                if (selectedBands.indexOf(band) === -1 && expansionPossibilities.indexOf(band) === -1) {
+                                    expansionPossibilities.push(band);
+                                }
+                                if (!combinationDetails[band]) {
+                                    combinationDetails[band] = [];
+                                }
+                                combinationDetails[band].push(combo.join('-'));
+                            });
+                        }
+                    });
+                    
+                    if (expansionPossibilities.length > 0) {
+                        var supportedBands = {
+                            standard: expansionPossibilities,
+                            vendor: [],
+                            combinations: combinationDetails
+                        };
+                        
+                        var expandedTitle = '';
+                        if (expandedType === 'lte3cc') expandedTitle = '+ Expandable to LTE 3CC';
+                        else if (expandedType === 'lte4cc') expandedTitle = '+ Expandable to LTE 4CC';
+                        else if (expandedType === 'endc2cc') expandedTitle = '+ Expandable to EN-DC (2+1)';
+                        else if (expandedType === 'endc3cc') expandedTitle = '+ Expandable to EN-DC (3+1)';
+                        else if (expandedType === 'endc4cc') expandedTitle = '+ Expandable to EN-DC (4+1)';
+                        
+                        container.appendChild(createHeatmap(expandedTitle, allBands, supportedBands, selectedBands, 'heatmap-mixed'));
+                    }
+                }
+            });
+            
+            // 3. THIRD: Show EN-DC possibilities if LTE bands are selected
+            var lteBandsSelected = selectedBands.filter(function(band) { return isLteBand(band); });
+            var nrBandsSelected = selectedBands.filter(function(band) { return isNrBand(band); });
+            
+            if (lteBandsSelected.length === selectedBands.length && selectedBands.length <= 4) {
+                // Pure LTE selection - show EN-DC possibilities
+                var endcPossibilities = [];
+                var endcCombinationDetails = {};
+                
+                // Check EN-DC combinations where our LTE bands can work with NR
+                Object.keys(combinations[currentPhase]).forEach(function(type) {
+                    if (type.startsWith('endc') || type === 'endcNrMulti') {
+                        combinations[currentPhase][type].forEach(function(combo) {
+                            var comboLteBands = combo.filter(function(band) { return isLteBand(band); });
+                            var comboNrBands = combo.filter(function(band) { return isNrBand(band); });
+                            
+                            if (selectedBands.every(function(band) { return comboLteBands.includes(band); }) &&
+                                comboLteBands.length === selectedBands.length && comboNrBands.length > 0) {
+                                
+                                comboNrBands.forEach(function(nrBand) {
+                                    if (endcPossibilities.indexOf(nrBand) === -1) {
+                                        endcPossibilities.push(nrBand);
+                                    }
+                                    if (!endcCombinationDetails[nrBand]) {
+                                        endcCombinationDetails[nrBand] = [];
+                                    }
+                                    endcCombinationDetails[nrBand].push(combo.join('-'));
+                                });
+                            }
+                        });
+                    }
+                });
+                
+                if (endcPossibilities.length > 0) {
+                    var endcSupportedBands = {
+                        standard: endcPossibilities,
+                        vendor: [],
+                        combinations: endcCombinationDetails
+                    };
+                    
+                    container.appendChild(createHeatmap('+ EN-DC Possibilities', allBands, endcSupportedBands, selectedBands, 'heatmap-mixed'));
+                }
+            }
+            
+            if (container.children.length === 0) {
+                var noExpansion = document.createElement('div');
+                noExpansion.innerHTML = '<p style="text-align: center; padding: 20px; color: #27ae60; font-weight: 600;">✓ Valid combination confirmed</p><p style="text-align: center; color: #7f8c8d;">No expansion possibilities available for this combination.</p>';
+                container.appendChild(noExpansion);
+            }
+            
+            var legend = createLegend();
+            
+            section.appendChild(title);
+            section.appendChild(container);
+            section.appendChild(legend);
+            results.appendChild(section);
+        }
+
+        function createLegend() {
+            var legend = document.createElement('div');
+            legend.className = 'legend';
+            
+            var items = [
+                { class: 'legend-supported', text: '3GPP Standard (FDD)' },
+                { class: 'legend-supported-tdd', text: '3GPP Standard (TDD)' },
+                { class: 'legend-vendor', text: 'Vendor Specific (FDD)' },
+                { class: 'legend-vendor-tdd', text: 'Vendor Specific (TDD)' },
+                { class: 'legend-not-supported', text: 'Not Supported' }
+            ];
+            
+            items.forEach(function(item) {
+                var legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                
+                var color = document.createElement('div');
+                color.className = 'legend-color ' + item.class;
+                
+                var text = document.createElement('span');
+                text.textContent = item.text;
+                
+                legendItem.appendChild(color);
+                legendItem.appendChild(text);
+                legend.appendChild(legendItem);
+            });
+            
+            return legend;
+        }
+
+        function updateCarrierOptions() {
+            console.log("Updating carrier options for phase:", currentPhase);
+            
+            var phase = document.getElementById('phase').value;
+            currentPhase = phase;
+            currentConfig = phaseConfigs[currentPhase];
+            
+            var carrier1 = document.getElementById('carrier1');
+            var carrier2 = document.getElementById('carrier2');
+            
+            // Clear options
+            carrier1.innerHTML = '<option value="">Select Primary Carrier</option>';
+            carrier2.innerHTML = '<option value="">Select Secondary Carrier</option>';
+            
+            // Add LTE options
+            currentConfig.lteBands.forEach(function(band) {
+                var text = 'Band ' + band + ' - ' + currentConfig.bandInfo[band] + ' (LTE)';
+                
+                var option1 = document.createElement('option');
+                option1.value = band;
+                option1.textContent = text;
+                carrier1.appendChild(option1);
+                
+                var option2 = document.createElement('option');
+                option2.value = band;
+                option2.textContent = text;
+                carrier2.appendChild(option2);
+            });
+            
+            // Add NR options
+            currentConfig.nrBands.forEach(function(band) {
+                var text = 'Band ' + band + ' - ' + currentConfig.bandInfo[band] + ' (NR)';
+                
+                var option1 = document.createElement('option');
+                option1.value = band;
+                option1.textContent = text;
+                carrier1.appendChild(option1);
+                
+                var option2 = document.createElement('option');
+                option2.value = band;
+                option2.textContent = text;
+                carrier2.appendChild(option2);
+            });
+            
+            updateAnalysis();
+        }
+
+        function updateAnalysis() {
+            var carrier1 = document.getElementById('carrier1').value;
+            var carrier2 = document.getElementById('carrier2').value;
+            var results = document.getElementById('results');
+            var errorMessage = document.getElementById('errorMessage');
+            
+            errorMessage.style.display = 'none';
+            results.innerHTML = '';
+            
+            var selectedBands = [carrier1, carrier2].filter(function(band) { return band; });
+            
+            if (selectedBands.length === 0) {
+                // Show all available bands
+                showAllBands();
+                return;
+            }
+            
+            if (selectedBands.length === 1) {
+                showSingleBandAnalysis(selectedBands[0]);
+            } else {
+                showDualBandAnalysis(selectedBands);
+            }
+        }
+
+        function clearSelection() {
+            document.getElementById('carrier1').value = '';
+            document.getElementById('carrier2').value = '';
+            updateAnalysis();
+        }
+
+        // Event listeners
+        document.getElementById('phase').addEventListener('change', updateCarrierOptions);
+        document.getElementById('carrier1').addEventListener('change', updateAnalysis);
+        document.getElementById('carrier2').addEventListener('change', updateAnalysis);
+
+        // Initialize
+        updateCarrierOptions();
+    </script>
+</body>
+</html>
