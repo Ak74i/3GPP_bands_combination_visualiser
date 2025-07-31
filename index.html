@@ -429,15 +429,15 @@
                 tddBands: ['38', '40', 'n78']
             },
             phase2: {
-                lteBands: ['1', '3', '28', '40'],
-                nrBands: ['n20', 'n28', 'n38', 'n78'],
+                lteBands: ['1', '3', '28', '40', '20'],
+                nrBands: ['n28', 'n78', 'n38', 'n8'],
                 bandLabels: {
-                    '1': 'B1', '3': 'B3', '28': 'B28', '40': 'B40',
-                    'n20': 'n20', 'n28': 'n28', 'n38': 'n38', 'n78': 'n78'
+                    '1': 'B1', '3': 'B3', '28': 'B28', '40': 'B40', '20': 'B20',
+                    'n28': 'n28', 'n78': 'n78', 'n38': 'n38', 'n8': 'n8'
                 },
                 bandInfo: {
-                    '1': '10 MHz', '3': '5 MHz', '28': '10 MHz', '40': '20 MHz', 
-                    'n20': '10 MHz', 'n28': '10 MHz', 'n38': '20 MHz', 'n78': '80 MHz'
+                    '1': '10 MHz', '3': '5 MHz', '28': '10 MHz', '40': '20+20 MHz', '20': '10 MHz',
+                    'n28': '10 MHz', 'n78': '40/80 MHz', 'n38': '20 MHz', 'n8': '10 MHz'
                 },
                 tddBands: ['40', 'n78', 'n38']
             }
@@ -496,51 +496,73 @@
             },
             phase2: {
                 lte2cc: [
-                    ['1', '3'], ['1', '28'], ['3', '28'], ['1', '40'], ['3', '40'], ['28', '40']
+                    ['1', '3'], ['1', '28'], ['1', '40'], ['1', '20'], ['3', '28'], ['3', '40'], 
+                    ['3', '20'], ['28', '40'], ['28', '20'], ['40', '20']
                 ],
                 lte2ccVendor: [],
                 lte3cc: [
-                    ['1', '3', '28'], ['1', '3', '40'], ['1', '28', '40'], ['3', '28', '40']
+                    ['1', '3', '28'], ['1', '3', '40'], ['1', '3', '20'], ['1', '28', '40'], 
+                    ['1', '28', '20'], ['1', '40', '20'], ['3', '28', '40'], ['3', '28', '20'],
+                    ['3', '40', '20'], ['28', '40', '20']
                 ],
                 lte4cc: [
-                    ['1', '3', '28', '40']
+                    ['1', '3', '28', '40'], ['1', '3', '28', '20'], ['1', '3', '40', '20'],
+                    ['1', '28', '40', '20'], ['3', '28', '40', '20']
                 ],
                 endc: [
-                    ['1', 'n28'], ['1', 'n78'], ['1', 'n38'], ['1', 'n20'], ['3', 'n28'], ['3', 'n78'], 
-                    ['3', 'n38'], ['3', 'n20'], ['28', 'n28'], ['28', 'n78'], ['28', 'n38'], ['28', 'n20'],
-                    ['40', 'n28'], ['40', 'n78'], ['40', 'n38'], ['40', 'n20'], ['1', 'n78'], ['3', 'n78'],
-                    ['28', 'n78']
+                    ['1', 'n28'], ['1', 'n78'], ['1', 'n38'], ['1', 'n8'], ['3', 'n28'], ['3', 'n78'], 
+                    ['3', 'n38'], ['3', 'n8'], ['28', 'n28'], ['28', 'n78'], ['28', 'n38'], ['28', 'n8'],
+                    ['40', 'n28'], ['40', 'n78'], ['40', 'n38'], ['40', 'n8'], ['20', 'n28'], ['20', 'n78'],
+                    ['20', 'n38'], ['20', 'n8']
                 ],
                 endc2cc: [
-                    ['1', '3', 'n28'], ['1', '3', 'n78'], ['1', '3', 'n38'], ['1', '3', 'n20'],
-                    ['1', '28', 'n28'], ['1', '28', 'n78'], ['1', '28', 'n38'], ['1', '28', 'n20'],
-                    ['1', '40', 'n28'], ['1', '40', 'n78'], ['1', '40', 'n38'], ['1', '40', 'n20'],
-                    ['3', '28', 'n28'], ['3', '28', 'n78'], ['3', '28', 'n38'], ['3', '28', 'n20'],
-                    ['3', '40', 'n28'], ['3', '40', 'n78'], ['3', '40', 'n38'], ['3', '40', 'n20'],
-                    ['28', '40', 'n28'], ['28', '40', 'n78'], ['28', '40', 'n38'], ['28', '40', 'n20'],
-                    ['1', '3', 'n78']
+                    ['1', '3', 'n28'], ['1', '3', 'n78'], ['1', '3', 'n38'], ['1', '3', 'n8'],
+                    ['1', '28', 'n28'], ['1', '28', 'n78'], ['1', '28', 'n38'], ['1', '28', 'n8'],
+                    ['1', '40', 'n28'], ['1', '40', 'n78'], ['1', '40', 'n38'], ['1', '40', 'n8'],
+                    ['1', '20', 'n28'], ['1', '20', 'n78'], ['1', '20', 'n38'], ['1', '20', 'n8'],
+                    ['3', '28', 'n28'], ['3', '28', 'n78'], ['3', '28', 'n38'], ['3', '28', 'n8'],
+                    ['3', '40', 'n28'], ['3', '40', 'n78'], ['3', '40', 'n38'], ['3', '40', 'n8'],
+                    ['3', '20', 'n28'], ['3', '20', 'n78'], ['3', '20', 'n38'], ['3', '20', 'n8'],
+                    ['28', '40', 'n28'], ['28', '40', 'n78'], ['28', '40', 'n38'], ['28', '40', 'n8'],
+                    ['28', '20', 'n28'], ['28', '20', 'n78'], ['28', '20', 'n38'], ['28', '20', 'n8'],
+                    ['40', '20', 'n28'], ['40', '20', 'n78'], ['40', '20', 'n38'], ['40', '20', 'n8']
                 ],
                 endc3cc: [
-                    ['1', '3', '28', 'n78'], ['1', '3', '28', 'n38'], ['1', '3', '28', 'n20'],
-                    ['1', '3', '40', 'n78'], ['1', '3', '40', 'n38'], ['1', '3', '40', 'n20'],
-                    ['1', '28', '40', 'n78'], ['1', '28', '40', 'n38'], ['1', '28', '40', 'n20'],
-                    ['3', '28', '40', 'n78'], ['3', '28', '40', 'n38'], ['3', '28', '40', 'n20'],
-                    ['1', '3', '28', 'n78'], ['1', '3', '40', 'n78'], ['1', '28', '40', 'n78']
+                    ['1', '3', '28', 'n78'], ['1', '3', '28', 'n38'], ['1', '3', '28', 'n8'],
+                    ['1', '3', '40', 'n78'], ['1', '3', '40', 'n38'], ['1', '3', '40', 'n8'],
+                    ['1', '3', '20', 'n78'], ['1', '3', '20', 'n38'], ['1', '3', '20', 'n8'],
+                    ['1', '28', '40', 'n78'], ['1', '28', '40', 'n38'], ['1', '28', '40', 'n8'],
+                    ['1', '28', '20', 'n78'], ['1', '28', '20', 'n38'], ['1', '28', '20', 'n8'],
+                    ['1', '40', '20', 'n78'], ['1', '40', '20', 'n38'], ['1', '40', '20', 'n8'],
+                    ['3', '28', '40', 'n78'], ['3', '28', '40', 'n38'], ['3', '28', '40', 'n8'],
+                    ['3', '28', '20', 'n78'], ['3', '28', '20', 'n38'], ['3', '28', '20', 'n8'],
+                    ['3', '40', '20', 'n78'], ['3', '40', '20', 'n38'], ['3', '40', '20', 'n8'],
+                    ['28', '40', '20', 'n78'], ['28', '40', '20', 'n38'], ['28', '40', '20', 'n8']
                 ],
                 endc4cc: [
                     ['1', '3', '28', '40', 'n78'], ['1', '3', '28', '40', 'n38'], 
-                    ['1', '3', '28', '40', 'n20'], ['1', '3', '28', '40', 'n78']
+                    ['1', '3', '28', '40', 'n8'], ['1', '3', '28', '20', 'n78'],
+                    ['1', '3', '28', '20', 'n38'], ['1', '3', '28', '20', 'n8'],
+                    ['1', '3', '40', '20', 'n78'], ['1', '3', '40', '20', 'n38'],
+                    ['1', '3', '40', '20', 'n8'], ['1', '28', '40', '20', 'n78'],
+                    ['1', '28', '40', '20', 'n38'], ['1', '28', '40', '20', 'n8'],
+                    ['3', '28', '40', '20', 'n78'], ['3', '28', '40', '20', 'n38'],
+                    ['3', '28', '40', '20', 'n8']
                 ],
                 endcNrMulti: [
-                    ['1', 'n28', 'n78'], ['1', 'n28', 'n38'], ['1', 'n28', 'n20'], ['1', 'n38', 'n78'], 
-                    ['1', 'n20', 'n78'], ['3', 'n28', 'n78'], ['3', 'n28', 'n38'], ['3', 'n28', 'n20'], 
-                    ['3', 'n38', 'n78'], ['3', 'n20', 'n78'], ['28', 'n28', 'n78'], ['28', 'n28', 'n38'], 
-                    ['28', 'n28', 'n20'], ['28', 'n38', 'n78'], ['28', 'n20', 'n78'], ['40', 'n28', 'n78'], 
-                    ['40', 'n28', 'n38'], ['40', 'n28', 'n20'], ['40', 'n38', 'n78'], ['40', 'n20', 'n78'], 
-                    ['40', 'n78', 'n78'], ['1', 'n78', 'n78'], ['3', 'n78', 'n78']
+                    ['1', 'n28', 'n78'], ['1', 'n28', 'n38'], ['1', 'n28', 'n8'], ['1', 'n38', 'n78'], 
+                    ['1', 'n8', 'n78'], ['1', 'n38', 'n8'], ['3', 'n28', 'n78'], ['3', 'n28', 'n38'], 
+                    ['3', 'n28', 'n8'], ['3', 'n38', 'n78'], ['3', 'n8', 'n78'], ['3', 'n38', 'n8'],
+                    ['28', 'n28', 'n78'], ['28', 'n28', 'n38'], ['28', 'n28', 'n8'], ['28', 'n38', 'n78'], 
+                    ['28', 'n8', 'n78'], ['28', 'n38', 'n8'], ['40', 'n28', 'n78'], ['40', 'n28', 'n38'], 
+                    ['40', 'n28', 'n8'], ['40', 'n38', 'n78'], ['40', 'n8', 'n78'], ['40', 'n38', 'n8'],
+                    ['20', 'n28', 'n78'], ['20', 'n28', 'n38'], ['20', 'n28', 'n8'], ['20', 'n38', 'n78'],
+                    ['20', 'n8', 'n78'], ['20', 'n38', 'n8'], ['40', 'n78', 'n78'], ['1', 'n78', 'n78'], 
+                    ['3', 'n78', 'n78'], ['28', 'n78', 'n78'], ['20', 'n78', 'n78']
                 ],
                 nrCa: [
-                    ['n28', 'n78'], ['n28', 'n38'], ['n28', 'n20'], ['n38', 'n78'], ['n20', 'n78'], ['n78', 'n78']
+                    ['n28', 'n78'], ['n28', 'n38'], ['n28', 'n8'], ['n38', 'n78'], ['n8', 'n78'], 
+                    ['n38', 'n8'], ['n78', 'n78']
                 ],
                 nrDc: [
                     ['n28', 'n78'], ['n78', 'n28'], ['n78', 'n78'], ['n78', 'n38']
@@ -694,17 +716,36 @@
                         tooltip.innerHTML = tooltipContent;
                         tooltip.style.display = 'block';
                         
-                        // Position tooltip
+                        // Improved positioning logic
                         var rect = cell.getBoundingClientRect();
-                        var left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2;
-                        if (left < 10) left = 10;
-                        if (left + tooltip.offsetWidth > window.innerWidth - 10) {
-                            left = window.innerWidth - tooltip.offsetWidth - 10;
+                        var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                        var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                        
+                        // Calculate tooltip dimensions
+                        var tooltipRect = tooltip.getBoundingClientRect();
+                        var tooltipWidth = tooltipRect.width;
+                        var tooltipHeight = tooltipRect.height;
+                        
+                        // Calculate ideal position (centered above the cell)
+                        var left = rect.left + scrollLeft + (rect.width / 2) - (tooltipWidth / 2);
+                        var top = rect.top + scrollTop - tooltipHeight - 12;
+                        
+                        // Horizontal boundary checks
+                        if (left < scrollLeft + 10) {
+                            left = scrollLeft + 10;
+                        } else if (left + tooltipWidth > scrollLeft + window.innerWidth - 10) {
+                            left = scrollLeft + window.innerWidth - tooltipWidth - 10;
                         }
                         
-                        var top = rect.top - tooltip.offsetHeight - 12;
-                        if (top < 10) {
-                            top = rect.bottom + 12;
+                        // Vertical boundary checks
+                        if (top < scrollTop + 10) {
+                            // If tooltip would be above viewport, show it below the cell
+                            top = rect.bottom + scrollTop + 12;
+                        }
+                        
+                        // Ensure tooltip doesn't go below viewport
+                        if (top + tooltipHeight > scrollTop + window.innerHeight - 10) {
+                            top = scrollTop + window.innerHeight - tooltipHeight - 10;
                         }
                         
                         tooltip.style.left = left + 'px';
@@ -713,6 +754,38 @@
                     
                     cell.addEventListener('mouseleave', function() {
                         tooltip.style.display = 'none';
+                    });
+                    
+                    // Update tooltip position on mouse move for better tracking
+                    cell.addEventListener('mousemove', function(e) {
+                        if (tooltip.style.display === 'block') {
+                            var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                            var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                            
+                            // Use mouse position for more responsive positioning
+                            var mouseX = e.clientX + scrollLeft;
+                            var mouseY = e.clientY + scrollTop;
+                            
+                            var tooltipRect = tooltip.getBoundingClientRect();
+                            var tooltipWidth = tooltipRect.width;
+                            var tooltipHeight = tooltipRect.height;
+                            
+                            var left = mouseX - (tooltipWidth / 2);
+                            var top = mouseY - tooltipHeight - 20;
+                            
+                            // Boundary checks
+                            if (left < scrollLeft + 10) left = scrollLeft + 10;
+                            if (left + tooltipWidth > scrollLeft + window.innerWidth - 10) {
+                                left = scrollLeft + window.innerWidth - tooltipWidth - 10;
+                            }
+                            if (top < scrollTop + 10) top = mouseY + 20;
+                            if (top + tooltipHeight > scrollTop + window.innerHeight - 10) {
+                                top = scrollTop + window.innerHeight - tooltipHeight - 10;
+                            }
+                            
+                            tooltip.style.left = left + 'px';
+                            tooltip.style.top = top + 'px';
+                        }
                     });
                 }
                 
